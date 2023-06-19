@@ -2,20 +2,18 @@ package com.spring.jpa.chap04_relation.repository;
 
 import com.spring.jpa.chap04_relation.entity.Department;
 import com.spring.jpa.chap04_relation.entity.Employee;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import javax.persistence.EntityManager;
+
 
 @SpringBootTest
 @Transactional
-@Rollback(false)
-class DepartmentRepositoryTest {
+public class DepartmentRepositoryTest {
 
     @Autowired
     EmployeeRepository employeeRepository;
@@ -23,70 +21,65 @@ class DepartmentRepositoryTest {
     @Autowired
     DepartmentRepository departmentRepository;
 
+    @Autowired
+    EntityManager entityManager;
 
-    @BeforeEach
-    void bulkInsert() {
-        Department d1 = Department.builder()
-                .name("영업부")
-                .build();
-       Department d2 =  Department.builder()
-               .name("개발부")
-               .build();
-
-       departmentRepository.save(d1);
-       departmentRepository.save(d2);
-
-        Employee e1 = Employee.builder()
-                .name("라이옹")
-                .department(d1)
-                .build();
-        Employee e2 = Employee.builder()
-                .name("어피치")
-                .department(d1)
-                .build();
-        Employee e3 = Employee.builder()
-                .name("프로도")
-                .department(d2)
-                .build();
-        Employee e4 = Employee.builder()
-                .name("춘식이")
-                .department(d2)
-                .build();
-
-        employeeRepository.save(e1);
-        employeeRepository.save(e2);
-        employeeRepository.save(e3);
-        employeeRepository.save(e4);
-    }
-    
     @Test
-    @DisplayName("특정 사원의 정보 조회")
-    void testFindOne() {
+    @DisplayName("특정 부서를 조회하면 해당 부서원들도 함께 조회되어야 한다.")
+    void testFindDept() {
         //given
         long id = 2L;
         //when
-        Employee employee
-        = employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("사원이 없음!"));
-        //then
-        System.out.println("\n\n\n");
-        System.out.println("employee = " + employee);
-        System.out.println("\n\n\n");
-
-        assertEquals("어피치", employee.getName());
-    }
-
-    @Test
-    @DisplayName("부서 정보 조회")
-    void testFindDept() {
-        //given
-        long id = 1L;
-        //when
-        Department department
-        =departmentRepository.findById(id).orElseThrow();
+        Department department = departmentRepository.findById(id)
+                .orElseThrow();
         //then
         System.out.println("\n\n\n");
         System.out.println("department = " + department);
+        System.out.println("department.getEmployees() = " + department.getEmployees());
+        System.out.println("\n\n\n");
+
+        
+        }
+        @Test
+        @DisplayName("Lazy 로딩과 Eager 로딩의 차이")
+        void testLazyAndEager() {
+            //given
+            long id = 3L;
+            //when
+            Employee employee
+                    = employeeRepository.findById(id).orElseThrow();
+            
+            //then
+            System.out.println("\n\n\n");
+            System.out.println("employee = " + employee.getDepartment());
+            System.out.println("\n\n\n");
+    }
+
+    @Test
+    @DisplayName("양방향 연관관계에서 연관데이터의 수정")
+    void testChangeDept() {
+        //3번 사원의 부서를 2번 부서에서 1번 부서로 변경하도록 한다.
+
+        //given
+        long id = 3L;
+        //when
+        Employee foundEmp = employeeRepository.findById(id).orElseThrow();
+        Department newDept = departmentRepository.findById(1L).orElseThrow();
+
+        //사원의 부서정보를 업데이트 하면서, 부서에 대한 정보도 같이 업데이트.
+        foundEmp.setDepartment(newDept);
+
+        employeeRepository.save(foundEmp);
+
+        //변경 감지(더티 체크) 후 변경된 내용을 DB에 반영하는 역할을 합니다.
+//        entityManager.flush();
+//        entityManager.clear();
+
+        //then
+        //1번 부서 정보를 조회해서 모든 사원을 보겠다.
+        Department foundDept = departmentRepository.findById(1L).orElseThrow();
+        System.out.println("\n\n\n");
+        foundDept.getEmployees().forEach(System.out::println);
         System.out.println("\n\n\n");
     }
 }
