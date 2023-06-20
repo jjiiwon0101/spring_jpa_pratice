@@ -1,5 +1,6 @@
 package com.spring.jpa.chap05_practice.dto;
 
+import com.spring.jpa.chap05_practice.entity.Post;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
@@ -26,4 +27,14 @@ public class PostCreateDTO {
     private String content;
 
     private List<String> hashTags;
+
+    //dto를 엔티티로 변환하는 메서드
+    public Post toEntity() {
+        return Post.builder()
+              .writer(this.writer)
+              .title(this.title)
+              .content(this.content)
+              // 해시태그는 여기서 넣는게 아니에요~~ (해시태그에 대한 컬럼이 아예 존재하지 않아서)
+              .build();
+    }
 }

@@ -62,13 +62,13 @@ public class PostApiController {
         ) {
         log.info("/api/v1/posts: POST - payload: {}", dto);
 
-        if(dto == null) {
+        if (dto == null) {
             return ResponseEntity
                     .badRequest()
                     .body("등록 게시물 정보를 전달해 주세요!<( ￣^￣)");
         }
 
-        if(result.hasErrors()) { //입력값 검증에 걸림
+        if (result.hasErrors()) { //입력값 검증에 걸림
             List<FieldError> fieldErrors = result.getFieldErrors();
             fieldErrors.forEach(err -> {
                 log.warn("invalid client data - {}", err.toString());
@@ -77,6 +77,15 @@ public class PostApiController {
                     .badRequest()
                     .body(fieldErrors);
         }
-        PostDetailResponseDTO responseDTO =  postService.insert(dto);
+        try {
+            PostDetailResponseDTO responseDTO = postService.insert(dto);
+            return ResponseEntity
+                    .ok()
+                    .body(responseDTO);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .internalServerError()
+                    .body("미안 서버 터졌어... 원인: " + e.getMessage());
+        }
     }
 }
