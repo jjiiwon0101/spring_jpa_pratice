@@ -59,4 +59,13 @@ public class PostService {
 
         return responseDTO;
     }
+
+    public PostDetailResponseDTO getDetail(long id) {
+        Post postEntity = postRepository.findById(id)
+                .orElseThrow(
+                        () -> new RuntimeException(id + "번 게시물이 존재하지 않습니다.")
+                );
+
+        return new PostDetailResponseDTO(postEntity);
+    }
 }
